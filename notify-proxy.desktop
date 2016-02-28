@@ -1,0 +1,4 @@
+[Desktop Entry]
+Name=Notification proxy
+NoDisplay=true
+Exec=~/.local/bin/notify-proxy
