@@ -57,7 +57,7 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-socket.setdefaulttimeout(1)
+socket.setdefaulttimeout(30)
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 addr, port = args.server.split(':')
 logger.info("Sending to %s:%s.", addr, port)
