@@ -37,4 +37,4 @@ Credits
 - Call ``notify-client`` on highlight on irssi with `ramnes/highlight_cmd
   <https://github.com/ramnes/hilightcmd>`_.
 - Initial idea stolen from `itsamenathan/libnotify-over-ssh
-<https://github.com/itsamenathan/libnotify-over-ssh>`_.
+  <https://github.com/itsamenathan/libnotify-over-ssh>`_.
