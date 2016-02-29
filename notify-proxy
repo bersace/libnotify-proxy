@@ -66,6 +66,6 @@ try:
 except KeyboardInterrupt:
     logger.info('Done')
 
-loop.run_until_complete(server.wait_closed())
 server.close()
+loop.run_until_complete(server.wait_closed())
 loop.close()
