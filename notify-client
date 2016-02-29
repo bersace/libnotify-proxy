@@ -14,10 +14,6 @@ logging.basicConfig(level=logging.WARNING, format='%(message)s')
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    'server', metavar='ADDR:PORT', default='127.0.0.1:1216', nargs='?',
-    help="Host to send notification to.",
-)
-parser.add_argument(
     'summary', metavar='SUMMARY',
     help="Titleline of the notification.",
 )
@@ -44,6 +40,10 @@ parser.add_argument(
         "Specifies basic extra data to pass. Valid types are int, double, "
         "string and byte."
     ),
+)
+parser.add_argument(
+    '-s', '--server', metavar='ADDR:PORT', default='127.0.0.1:1216',
+    help="Host to send notification to.",
 )
 parser.add_argument(
     '-t', '--expire-time', metavar='TIME',
