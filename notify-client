@@ -54,6 +54,10 @@ parser.add_argument(
     choices=['low', 'normal', 'critical'],
     help="Specifies the urgency level.",
 )
+parser.add_argument(
+    '-w', '--window-id', metavar='WINDOWID',
+    help="Specifies the source window id.",
+)
 
 args = parser.parse_args()
 

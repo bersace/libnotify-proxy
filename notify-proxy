@@ -5,7 +5,6 @@ from distutils.spawn import find_executable
 import os
 import logging
 import json
-import subprocess
 
 
 logger = logging.getLogger('notify-proxy')
@@ -15,9 +14,26 @@ notify_send_path = find_executable('notify-send')
 
 
 @asyncio.coroutine
+def is_focused(window_id):
+    child = yield from asyncio.create_subprocess_exec(
+        'xwininfo', '-id', str(window_id), '-wm',
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+
+    stdout, _ = yield from child.communicate()
+    return child.returncode == 0 and b'Focused' in stdout
+
+
+@asyncio.coroutine
 def notify_send(
-        summary, body=None, urgency='normal', icon=None,
+        summary, body=None, urgency='normal', icon=None, window_id=None,
         **kwargs):
+
+    if window_id:
+        is_window_focused = yield from is_focused(window_id)
+        if is_window_focused:
+            return logger.info("Inhibited for focused window %s", window_id)
 
     args = [notify_send_path]
     if icon:
@@ -48,7 +64,11 @@ class NotifyProtocol(asyncio.Protocol):
 
 
 
-logging.basicConfig(level=logging.INFO, format='%(message)s')
+DEBUG = os.environ.get('DEBUG')
+logging.basicConfig(
+    level=logging.DEBUG if DEBUG else logging.INFO,
+    format='%(message)s',
+)
 logger.info("Starting notify-proxy")
 
 loop = asyncio.get_event_loop()
@@ -61,10 +81,15 @@ server = loop.run_until_complete(loop.create_server(
 
 logger.info("Listening on %s:%d", addr, port)
 
-try:
-    loop.run_forever()
-except KeyboardInterrupt:
-    logger.info('Done')
+if DEBUG:
+    data = json.loads(DEBUG)
+    logger.debug("Testing %r", data)
+    loop.run_until_complete(asyncio.async(notify_send(**data)))
+else:
+    try:
+        loop.run_forever()
+    except KeyboardInterrupt:
+        logger.info('Done')
 
 server.close()
 loop.run_until_complete(server.wait_closed())
