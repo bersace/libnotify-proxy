@@ -40,5 +40,15 @@ Credits
 
 - Call ``notify-client`` on highlight on irssi with `ramnes/highlight_cmd
   <https://github.com/ramnes/hilightcmd>`_.
+
+  My ``hilightcmd_systemcmd`` value is::
+
+    notify-client --window-id $(paste -sd ~/.cache/windowids) "%(message)s" "Message IRC sur $(hostname --fqdn)" &``
+
+  ``~/.cache/windowids`` is maintained by `.profile
+  <https://github.com/bersace/playbooks/blob/0284cbe/roles/bersace.sharedhost/templates/dotprofile.j2#L32-L34>`_
+  and `.bash_logout
+  <https://github.com/bersace/playbooks/blob/0284cbe/roles/bersace.sharedhost/templates/dotbash_logout.j2#L12-L14>`_.
+
 - Initial idea stolen from `itsamenathan/libnotify-over-ssh
   <https://github.com/itsamenathan/libnotify-over-ssh>`_.

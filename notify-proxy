@@ -31,9 +31,11 @@ def notify_send(
         **kwargs):
 
     if window_id:
-        is_window_focused = yield from is_focused(window_id)
-        if is_window_focused:
-            return logger.info("Inhibited for focused window %s", window_id)
+        window_ids = window_id.split(',')
+        for window_id in window_ids:
+            is_window_focused = yield from is_focused(window_id)
+            if is_window_focused:
+                return logger.info("Inhibited for focused window %s", window_id)
 
     args = [notify_send_path]
     if icon:
