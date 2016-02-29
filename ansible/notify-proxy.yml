@@ -1,0 +1,16 @@
+- hosts: all
+  tasks:
+  - name: Install dependencies
+    apt: name=libnotify-bin
+    become: yes
+
+  - name: Install notify-proxy script
+    copy:
+      src: ../notify-proxy
+      dest: ~/.local/bin/notify-proxy
+      mode: 0750
+
+  - name: Setup session autostart
+    copy:
+      src: ../notify-proxy.desktop
+      dest: ~/.config/autostart/notify-proxy.desktop
