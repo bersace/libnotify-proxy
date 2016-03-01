@@ -68,6 +68,7 @@ parser.add_argument(
 parser.add_argument(
     '-w', '--window-id', metavar='FILE|WINDOWID[,WINDOWID...]',
     help="Specifies the source window id.",
+    default=os.path.expanduser('~/.cache/windowids'),
 )
 
 args = parser.parse_args()
@@ -90,7 +91,7 @@ try:
     with open(data['window_id']) as fo:
         data['window_id'] = ','.join(fo.read().splitlines())
         logger.debug("Read window_id %r from %s", data['window_id'], fo.name)
-except IOError:
+except (TypeError, IOError):
     pass
 
 if not re.match('[0-9,]+', data['window_id']):
