@@ -70,7 +70,12 @@ socket.setdefaulttimeout(30)
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 addr, port = args.server.split(':')
 logger.info("Sending to %s:%s.", addr, port)
-client.connect((addr, int(port)))
+
+try:
+    client.connect((addr, int(port)))
+except ConnectionRefusedError:
+    logger.warn('Failed to notify %r. Connection refused.', args.summary)
+    sys.exit(1)
 
 data = dict(args.__dict__)
 data.pop('server')
