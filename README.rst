@@ -13,19 +13,34 @@ SSH Setup
 On your desktop station:
 
 - Install ``libnotify-bin`` and python3.
-- Put ``notify-proxy`` in ``~/.local/bin/``.
+- Put ``notify-proxy`` in your ``PATH``.
 - Put ``notify-proxy.desktop`` in ``~/.config/autostart``.
 - Setup ``RemoteForward 1216 127.0.0.1:1216`` in ``~/.ssh/config`` or use
   ``ssh -R 1216:localhost:1216``.
-- Add ``SendEnv WINDOWID`` in ``~/.ssh/config``.
-- Launch ``./notify-proxy``
+- Launch ``notify-proxy`` or launch a new desktop session.
 
 
 On servers:
 
-- Add ``WINDOWID`` to ``AcceptEnv`` in ``/etc/ssh/sshd_config`` and reload
-  ``ssh``.
 - Copy ``notify-client``.
+- Maintain ``~/.cache/windowids``:
+
+  In ``~/.profile``::
+
+    if [ ${LC_WINDOWID-} ] ; then
+        export WINDOWID=$LC_WINDOWID
+    fi
+
+    if [ ${WINDOWID-} ] ; then
+        echo $WINDOWID >> ~/.cache/windowids
+    fi
+
+  In ``~/.bash_logout``::
+
+    if [ "${WINDOWID-}" ] ; then
+        sed -i /${WINDOWID}/d ~/.cache/windowids
+    fi
+
 
 Now, use ``notify-client`` just like ``notify-send``, long options are
 compatible.
@@ -33,7 +48,7 @@ compatible.
 .. code-block:: console
 
    $ notify-client Summary "Long body"
-   $ notify-client -w $WINDOWID Summary "Long body"
+
 
 Credits
 -------
