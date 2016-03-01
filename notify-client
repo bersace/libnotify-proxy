@@ -3,6 +3,8 @@
 import argparse
 import json
 import logging
+import os
+import re
 import socket
 import sys
 
@@ -58,7 +60,7 @@ parser.add_argument(
     help="Specifies the urgency level.",
 )
 parser.add_argument(
-    '-w', '--window-id', metavar='WINDOWID[,WINDOWID...]',
+    '-w', '--window-id', metavar='FILE|WINDOWID[,WINDOWID...]',
     help="Specifies the source window id.",
 )
 
@@ -72,6 +74,18 @@ client.connect((addr, int(port)))
 
 data = dict(args.__dict__)
 data.pop('server')
+
+try:
+    with open(data['window_id']) as fo:
+        data['window_id'] = ','.join(fo.read().splitlines())
+        logger.debug("Read window_id %r from %s", data['window_id'], fo.name)
+except IOError:
+    pass
+
+if not re.match('[0-9,]+', data['window_id']):
+    logger.debug("Ignore window_id %r", data['window_id'])
+    data['window_id'] = None
+
 payload = json.dumps(data).encode('utf-8')
 
 logger.debug(">>> %r", payload)
