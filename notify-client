@@ -9,6 +9,12 @@ import socket
 import sys
 
 
+try:
+    ConnectionRefusedError
+except NameError:
+    ConnectionRefusedError = socket.error
+
+
 logger = logging.getLogger('notify-client')
 
 
