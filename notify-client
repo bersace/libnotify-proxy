@@ -10,7 +10,10 @@ import sys
 logger = logging.getLogger('notify-client')
 
 
-logging.basicConfig(level=logging.WARNING, format='%(message)s')
+logging.basicConfig(
+    level=logging.DEBUG if os.environ.get('DEBUG') else logging.WARNING,
+    format='%(message)s',
+)
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
