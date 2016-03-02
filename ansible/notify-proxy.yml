@@ -4,6 +4,12 @@
     apt: name=libnotify-bin
     become: yes
 
+  - name: Install notify-is-focused script
+    copy:
+      src: ../notify-is-focused
+      dest: ~/.local/bin/notify-is-focused
+      mode: 0750
+
   - name: Install notify-proxy script
     copy:
       src: ../notify-proxy

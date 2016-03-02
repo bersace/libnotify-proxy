@@ -41,6 +41,12 @@ parser.add_argument(
     '-c', '--category', metavar='TYPE[,TYPE...]',
     help="Specifies the notification category.",
 )
+AUTO_CONTEXT = object()
+parser.add_argument(
+    '-f', '--focus-context', metavar='{VAR:...[,VAR:...]}',
+    help="Specifies focus context.",
+    default=AUTO_CONTEXT,
+)
 parser.add_argument(
     '-i', '--icon', metavar='ICON[,ICON...]',
     help="Specifies an icon filename or stock icon to display.",
@@ -65,11 +71,6 @@ parser.add_argument(
     choices=['low', 'normal', 'critical'],
     help="Specifies the urgency level.",
 )
-parser.add_argument(
-    '-w', '--window-id', metavar='FILE|WINDOWID[,WINDOWID...]',
-    help="Specifies the source window id.",
-    default=os.path.expanduser('~/.cache/windowids'),
-)
 
 args = parser.parse_args()
 
@@ -87,16 +88,32 @@ except ConnectionRefusedError:
 data = dict(args.__dict__)
 data.pop('server')
 
-try:
-    with open(data['window_id']) as fo:
-        data['window_id'] = ','.join(fo.read().splitlines())
-        logger.debug("Read window_id %r from %s", data['window_id'], fo.name)
-except (TypeError, IOError):
-    pass
+focus_context = {}
+if data['focus_context'] == AUTO_CONTEXT:
+    window_id = ''
+    try:
+        with open(os.path.expanduser('~/.cache/windowids')) as fo:
+            window_id = ','.join(fo.read().splitlines())
+            logger.debug("Read window_id %r from %s", window_id, fo.name)
+    except (TypeError, IOError):
+        window_id = os.environ.get('WINDOWID')
 
-if not re.match('[0-9,]+', data['window_id']):
-    logger.debug("Ignore window_id %r", data['window_id'])
-    data['window_id'] = None
+    focus_context['WINDOWID'] = window_id
+
+    uuid = ''
+    try:
+        with open(os.path.expanduser('~/.cache/terminator_uuids')) as fo:
+            uuid = ','.join(fo.read().splitlines())
+            logger.debug("Read TERMINATOR_UUID %r from %s", uuid, fo.name)
+    except (TypeError, IOError):
+        uuid = os.environ.get('TERMINATOR_UUID')
+
+    focus_context['TERMINATOR_UUID'] = uuid
+
+    focus_context['TMUX_PANE'] = os.environ.get('TMUX_PANE')
+
+    data['focus_context'] = json.dumps(focus_context)
+    logger.debug("Automatic focus_context is %r", data['focus_context'])
 
 payload = json.dumps(data).encode('utf-8')
 

@@ -1,0 +1,124 @@
+#!/usr/bin/env python3
+
+import logging
+import os
+import re
+import socket
+import subprocess
+import sys
+import yaml
+
+import psutil
+
+
+logger = logging.getLogger(__name__)
+
+
+_window_pid_re = re.compile(r'Process id: (?P<pid>\d+)')
+_window_title_re = re.compile(r'Window id:.*"(?P<title>.*)"')
+
+def is_focused(data):
+    window_process = None
+    window_title = ''
+
+    logger.debug("Searching for %r", data)
+
+    if data.get('WINDOWID'):
+        logger.debug("Searching WINDOWID %s", data['WINDOWID'])
+        window_ids = str(data['WINDOWID']).split(',')
+        for window_id in window_ids:
+            child = subprocess.run(
+                ['xwininfo', '-id', str(window_id), '-wm'],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            if child.returncode == 0:
+                break
+        else:
+            logger.debug("No such window")
+            return False
+
+        stdout = child.stdout.decode('utf-8')
+        if 'Focused' not in stdout:
+            logger.debug("Window not focused by X11")
+            return False
+
+        m = _window_pid_re.search(stdout)
+        assert m
+        window_process = focused_process = psutil.Process(int(m.group('pid')))
+        logger.debug("Window process is %s", window_process)
+
+        m = _window_title_re.search(stdout)
+        assert m
+        window_title = m.group('title')
+        logger.debug("Window title is %s", window_title)
+
+    if data.get('TERMINATOR_UUID'):
+        # Put this in tmux.conf:
+        #
+        #     set -g update-environment "DISPLAY SSH_AGENT_PID SSH_AUTH_SOCK -SSH_CONNECTION TERMINATOR_UUID WINDOWID XAUTHORITY"  # noqa
+        #
+        logger.debug("Searching terminator tab %s", data['TERMINATOR_UUID'])
+        if not window_process:
+            logger.debug("No such window")
+            return False
+
+        if 'terminator' not in ''.join(window_process.cmdline()):
+            logger.debug("Current window is not terminator")
+            return False
+
+        uuids = data['TERMINATOR_UUID'].split(',')
+        for uuid in uuids:
+            for child in window_process.children():
+                try:
+                    environ = child.environ()
+                except Exception:
+                    continue
+
+                if 'TERMINATOR_UUID' not in environ:
+                    continue
+
+                if environ['TERMINATOR_UUID'] != uuid:
+                    continue
+
+                logger.debug("Found tab process %s", child)
+                bash_process = focused_process = child
+                break
+            else:
+                continue
+            break
+        else:
+            logger.debug("Tab not in focused terminator")
+            return False
+
+    if data.get('TMUX_PANE'):
+        logger.debug("Searching tmux pane %s", data['TMUX_PANE'])
+        for child in focused_process.children():
+            if child.name() in ('ssh', 'tmux'):
+                tmux_process = focused_process = child
+                logger.debug("Found ssh/tmux client %s", tmux_process)
+                break
+        else:
+            logger.debug("No ssh/tmux client found")
+            return False
+
+        title_token = ' %s' % (data['TMUX_PANE'],)
+
+        # Put this in .tmux.conf:
+        #
+        #     set -g set-titles on
+        #     set -g set-titles-string '#W - byobu #{client_pid}#D'
+        if not window_title.endswith(title_token):
+            logger.debug("Pane not focused")
+            return False
+
+    logger.debug("Windows focused!")
+
+    return True
+
+
+logging.basicConfig(
+    level=logging.DEBUG if os.environ.get('DEBUG') else logging.INFO,
+)
+data = yaml.load(sys.argv[1])
+sys.exit(0 if is_focused(data) else 1)

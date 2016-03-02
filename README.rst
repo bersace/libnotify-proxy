@@ -14,6 +14,7 @@ On your desktop station:
 
 - Install ``libnotify-bin`` and python3.
 - Put ``notify-proxy`` in your ``PATH``.
+- Put ``notify-is-focused`` in your ``PATH``.
 - Put ``notify-proxy.desktop`` in ``~/.config/autostart``.
 - Setup ``RemoteForward 1216 127.0.0.1:1216`` in ``~/.ssh/config`` or use
   ``ssh -R 1216:localhost:1216``.
@@ -22,7 +23,7 @@ On your desktop station:
 
 On servers:
 
-- Copy ``notify-client``.
+- Put ``notify-client`` in your ``PATH``.
 - Maintain ``~/.cache/windowids``:
 
   In ``~/.profile``::

@@ -14,29 +14,27 @@ notify_send_path = find_executable('notify-send')
 
 
 @asyncio.coroutine
-def is_focused(window_id):
+def is_focused(focus_context):
     child = yield from asyncio.create_subprocess_exec(
-        'xwininfo', '-id', str(window_id), '-wm',
+        'notify-is-focused', focus_context,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
 
     stdout, _ = yield from child.communicate()
-    return child.returncode == 0 and b'Focused' in stdout
+    return child.returncode == 0
 
 
 @asyncio.coroutine
 def notify_send(
-        summary, body=None, urgency='normal', icon=None, window_id=None,
+        summary, body=None, urgency='normal', icon=None, focus_context=None,
         expire_time=None,
         **kwargs):
 
-    if window_id:
-        window_ids = window_id.split(',')
-        for window_id in window_ids:
-            is_window_focused = yield from is_focused(window_id)
-            if is_window_focused:
-                return logger.info("Inhibited for focused window %s", window_id)
+    if focus_context:
+        is_window_focused = yield from is_focused(focus_context)
+        if is_window_focused:
+            return logger.info("Inhibited for focused window for %s.", summary)
 
     args = [notify_send_path]
     if expire_time:
