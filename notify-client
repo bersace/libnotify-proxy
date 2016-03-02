@@ -29,7 +29,8 @@ parser.add_argument(
     help="Titleline of the notification.",
 )
 parser.add_argument(
-    'body', default=None, metavar='BODY', nargs='?',
+    'body', metavar='BODY', nargs='?',
+    default="From " + socket.getfqdn(),
     help="Extendend information in the notification.",
 )
 
