@@ -123,6 +123,10 @@ def is_focused(environ):
         if title_token not in window_title:
             logger.debug("Pane not focused")
             return False
+    else:
+        if window_title != focused_process.cmdline()[0]:
+            logger.debug("Terminator tab is not focused")
+            return False
 
     logger.debug("Process focused!")
 
