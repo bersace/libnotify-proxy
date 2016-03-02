@@ -33,16 +33,16 @@ def is_focused(data):
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             )
-            if child.returncode == 0:
+            if child.returncode != 0:
+                continue
+
+            stdout = child.stdout.decode('utf-8')
+            if 'Focused' in stdout:
                 break
         else:
-            logger.debug("No such window")
+            logger.debug("No such focused window")
             return False
 
-        stdout = child.stdout.decode('utf-8')
-        if 'Focused' not in stdout:
-            logger.debug("Window not focused by X11")
-            return False
 
         m = _window_pid_re.search(stdout)
         assert m
