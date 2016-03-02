@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 _window_pid_re = re.compile(r'Process id: (?P<pid>\d+)')
 _window_title_re = re.compile(r'Window id:.*"(?P<title>.*)"')
+_tmux_session_re = re.compile(r'.*?(?P<session>[^/,]*),.*')
 
 def is_focused(data):
     window_process = None
@@ -91,7 +92,7 @@ def is_focused(data):
             logger.debug("Tab not in focused terminator")
             return False
 
-    if data.get('TMUX_PANE'):
+    if data.get('TMUX_PANE') and data.get('TMUX'):
         logger.debug("Searching tmux pane %s", data['TMUX_PANE'])
         for child in focused_process.children():
             if child.name() in ('ssh', 'tmux'):
@@ -102,17 +103,27 @@ def is_focused(data):
             logger.debug("No ssh/tmux client found")
             return False
 
-        title_token = ' %s' % (data['TMUX_PANE'],)
-
+        m = _tmux_session_re.match(data['TMUX'])
+        session = m.group('session')
         # Put this in .tmux.conf:
         #
         #     set -g set-titles on
-        #     set -g set-titles-string '#W - byobu #{client_pid}#D'
-        if not window_title.endswith(title_token):
+        #     set -g set-titles-string '#H (byobu@#(basename ${TMUX%%%%,*})#D'
+        title_format = os.environ.get(
+            'NOTIFY_TITLE_TOKEN_FMT',
+            '%(host)s (byobu@%(session)s%(pane)s'
+        )
+        title_token = title_format % dict(
+            host=data.get('HOSTNAME', socket.getfqdn()),
+            session=session,
+            pane=data['TMUX_PANE'],
+        )
+        logger.debug("Search %s in window title", title_token)
+        if title_token not in window_title:
             logger.debug("Pane not focused")
             return False
 
-    logger.debug("Windows focused!")
+    logger.debug("Process focused!")
 
     return True
 

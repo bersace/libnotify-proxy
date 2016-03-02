@@ -90,11 +90,14 @@ data.pop('server')
 
 focus_context = {}
 if data['focus_context'] == AUTO_CONTEXT:
+    focus_context['HOSTNAME'] = socket.getfqdn()
+    focus_context['TMUX'] = os.environ.get('TMUX')
+
     window_id = ''
     try:
         with open(os.path.expanduser('~/.cache/windowids')) as fo:
             window_id = ','.join(fo.read().splitlines())
-            logger.debug("Read window_id %r from %s", window_id, fo.name)
+            logger.debug("Read WINDOWID %r from %s", window_id, fo.name)
     except (TypeError, IOError):
         window_id = os.environ.get('WINDOWID')
 
