@@ -59,7 +59,7 @@ parser.add_argument(
     help="Host to send notification to.",
 )
 parser.add_argument(
-    '-t', '--expire-time', metavar='TIME',
+    '-t', '--expire-time', metavar='TIME', default=500,
     help="Specifies the timeout in milliseconds at which to expire.",
 )
 parser.add_argument(
