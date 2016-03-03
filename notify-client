@@ -16,6 +16,7 @@ except NameError:
 
 
 logger = logging.getLogger('notify-client')
+current_title = os.environ.get('NOTIFY_TITLE')
 
 
 logging.basicConfig(
@@ -30,7 +31,7 @@ parser.add_argument(
 )
 parser.add_argument(
     'body', metavar='BODY', nargs='?',
-    default="From " + socket.getfqdn(),
+    default="From %s" % current_title if current_title else None,
     help="Extendend information in the notification.",
 )
 
@@ -41,12 +42,6 @@ parser.add_argument(
 parser.add_argument(
     '-c', '--category', metavar='TYPE[,TYPE...]',
     help="Specifies the notification category.",
-)
-AUTO_CONTEXT = object()
-parser.add_argument(
-    '-f', '--focus-context', metavar='{VAR:...[,VAR:...]}',
-    help="Specifies focus context.",
-    default=AUTO_CONTEXT,
 )
 parser.add_argument(
     '-i', '--icon', metavar='ICON[,ICON...]',
@@ -88,36 +83,7 @@ except ConnectionRefusedError:
 
 data = dict(args.__dict__)
 data.pop('server')
-
-focus_context = {}
-if data['focus_context'] == AUTO_CONTEXT:
-    focus_context['HOSTNAME'] = socket.getfqdn()
-    focus_context['TMUX'] = os.environ.get('TMUX')
-
-    window_id = ''
-    try:
-        with open(os.path.expanduser('~/.cache/windowids')) as fo:
-            window_id = ','.join(fo.read().splitlines())
-            logger.debug("Read WINDOWID %r from %s", window_id, fo.name)
-    except (TypeError, IOError):
-        window_id = os.environ.get('WINDOWID')
-
-    focus_context['WINDOWID'] = window_id
-
-    uuid = ''
-    try:
-        with open(os.path.expanduser('~/.cache/terminator_uuids')) as fo:
-            uuid = ','.join(fo.read().splitlines())
-            logger.debug("Read TERMINATOR_UUID %r from %s", uuid, fo.name)
-    except (TypeError, IOError):
-        uuid = os.environ.get('TERMINATOR_UUID')
-
-    focus_context['TERMINATOR_UUID'] = uuid
-
-    focus_context['TMUX_PANE'] = os.environ.get('TMUX_PANE')
-
-    data['focus_context'] = json.dumps(focus_context)
-    logger.debug("Automatic focus_context is %r", data['focus_context'])
+data['window_title'] = current_title
 
 payload = json.dumps(data).encode('utf-8')
 
