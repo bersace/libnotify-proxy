@@ -7,26 +7,26 @@ export NOTIFY_MIN_SECONDS=${NOTIFY_MIN_SECONDS-10}
 function _guess_window_title() {
     fqdn=$(hostname --fqdn)
     if [ -n "${BYOBU_BACKEND-}" ] && [ -n "${TMUX-}" ] ; then
-        if (echo -e 'tmux 1.8 NEWER'; tmux -V;) | sort -V | head -1 | grep -q NEWER ; then
+        if (echo -e '8.0 NEWER'; cat /etc/debian_version) | sort -V | head -1 | grep -q NEWER ; then
             window=$(tmux display-message -p '#W')
             echo "$window $fqdn ($$)";
         else
             # This is the default byobu title, recomputed
             ip=$(ip addr show dev eth0 | grep -oP '(?<=inet )(.*)(?=/)')
-            echo "$fqdn ($ip) - byobu"
+            echo "${LOGNAME}@$fqdn ($ip) - byobu"
         fi
     else
         # Put this in ~/.config/byobu/.tmux.conf:
         #
         #     set -g set-titles on
         #     set -g set-titles-string '#(hostname --fqdn) (#{pane_pid})'
-        echo "$fqdn ($$)"
+        echo "bash $fqdn ($$)"
     fi
 }
 
 function _reset_title() {
     export NOTIFY_TITLE=$(_guess_window_title)
-    echo -ne "\033]0;${NOTIFY_TITLE}\007"
+    echo -ne "\033]2;${NOTIFY_TITLE}\007"
 }
 
 function _notify_last_command() {
