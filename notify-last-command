@@ -4,6 +4,10 @@
 export NOTIFY_MIN_SECONDS=${NOTIFY_MIN_SECONDS-10}
 
 
+function _reset_title() {
+    echo -ne "\033]0;/bin/bash ($$)\007"
+}
+
 function _notify_last_command() {
     last_entry=($@)
 
@@ -46,6 +50,9 @@ function notify_last_command() {
     last_entry="$(HISTTIMEFORMAT="%s " history 1)"
 
     export _NOTIFY_LAST_TIME=$(date +%s)
+    if expr match "$last_entry" ".*\(byobu\|tmux\|screen\|ssh\).*" &>/dev/null ; then
+        _reset_title
+    fi
 
     # Run in background
     (_notify_last_command $last_exit_status ${last_entry} &)
@@ -53,8 +60,7 @@ function notify_last_command() {
 
 # Ignore previous history.
 export _NOTIFY_LAST_TIME=$(date +%s)
-# Set title.
-echo -ne "\033]0;/bin/bash ($$)\007"
+_reset_title
 
 if [[ ${BASH_SOURCE[0]} = $0 ]]; then
     set -eu
