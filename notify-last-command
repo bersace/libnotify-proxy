@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Minimal duration of last commands to notify it.
+export NOTIFY_MIN_SECONDS=${NOTIFY_MIN_SECONDS-10}
+
+
 function _notify_last_command() {
     last_entry=($@)
 
@@ -15,6 +19,13 @@ function _notify_last_command() {
 
     last_start=${last_entry[2]}
     if [ $last_start -le ${_NOTIFY_LAST_TIME-0} ] ; then
+        return
+    fi
+
+    now=$(date +%s)
+    elapsed_seconds=$((now - last_start))
+
+    if [ $elapsed_seconds -lt ${NOTIFY_MIN_SECONDS} ] ; then
         return
     fi
 
@@ -34,10 +45,10 @@ function notify_last_command() {
     last_exit_status=$1
     last_entry="$(HISTTIMEFORMAT="%s " history 1)"
 
+    export _NOTIFY_LAST_TIME=$(date +%s)
+
     # Run in background
     (_notify_last_command $last_exit_status ${last_entry} &)
-
-    export _NOTIFY_LAST_TIME=$(date +%s)
 }
 
 # Ignore previous history.
