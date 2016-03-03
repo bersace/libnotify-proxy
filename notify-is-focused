@@ -111,7 +111,7 @@ def is_focused(environ):
         #     set -g set-titles on
         #     set -g set-titles-string '#H (byobu@#(basename ${TMUX%%%%,*})#D'
         title_format = os.environ.get(
-            'NOTIFY_TITLE_TOKEN_FMT',
+            'NOTIFY_TMUX_TITLE_FMT',
             '%(host)s (byobu@%(session)s%(pane)s'
         )
         title_token = title_format % dict(
@@ -124,7 +124,11 @@ def is_focused(environ):
             logger.debug("Pane not focused")
             return False
     else:
-        if window_title != focused_process.cmdline()[0]:
+        title_token = "%s (%s)" % (
+            focused_process.cmdline()[0],
+            focused_process.pid,
+        )
+        if title_token not in window_title:
             logger.debug("Terminator tab is not focused")
             return False
 

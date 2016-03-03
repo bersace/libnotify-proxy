@@ -1,0 +1,51 @@
+#!/bin/bash
+
+function _notify_last_command() {
+    last_entry=($@)
+
+    # If not desktop, use client.
+    if [ -z "${DESKTOP_SESSION-}" ] ; then
+        notify=notify-client
+    elif notify-is-focused; then
+        # bash is focused. skip.
+        return
+    else
+        notify=notify-send
+    fi
+
+    last_start=${last_entry[2]}
+    if [ $last_start -le ${_NOTIFY_LAST_TIME-0} ] ; then
+        return
+    fi
+
+    last_exit_code=${last_entry[0]}
+    last_command=${last_entry[@]:3}
+
+    if [ ${last_exit_code} -eq 0 ] ; then
+        $notify --icon utilites-terminal \
+                "Command exited on $(hostname --fqdn)" "$last_command"
+    else
+        $notify --icon gtk-dialog-error --urgency=critical \
+                "Command failed on $(hostname --fqdn)" "$last_command"
+    fi
+}
+
+function notify_last_command() {
+    last_exit_status=$1
+    last_entry="$(HISTTIMEFORMAT="%s " history 1)"
+
+    # Run in background
+    (_notify_last_command $last_exit_status ${last_entry} &)
+
+    export _NOTIFY_LAST_TIME=$(date +%s)
+}
+
+# Ignore previous history.
+export _NOTIFY_LAST_TIME=$(date +%s)
+# Set title.
+echo -ne "\033]0;/bin/bash ($$)\007"
+
+if [[ ${BASH_SOURCE[0]} = $0 ]]; then
+    set -eu
+    notify_last_command $1
+fi
