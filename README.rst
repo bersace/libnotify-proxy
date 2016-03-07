@@ -21,6 +21,7 @@ Setup
 Notify last command in bash
 ---------------------------
 
+- Install ``xdotool``.
 - Install ``notify-is-focused`` in your ``PATH``.
 - Put this in your ``.bashrc``::
 
@@ -47,7 +48,7 @@ Notify over SSH
 
 On your desktop station:
 
-- Install ``notify-send``, ``xdotool`` and Python.
+- Install ``libnotify-bin`` and Python.
 - Install ``notify-proxy`` scripts in your ``PATH``.
 - Put ``notify-proxy.desktop`` in ``~/.config/autostart``.
 - Launch ``notify-proxy`` or open a new desktop session.
@@ -57,7 +58,8 @@ On your desktop station:
 
 On remote servers:
 
-- Setup bash and byobu as above.
+- Install ``notify-last-command`` and setup bashrc and byobu as above.
+- You don't need ``xdotool`` or ``notify-is-focused``.
 - Install ``notify-client`` in your ``PATH``.
 - Test as above.
 
