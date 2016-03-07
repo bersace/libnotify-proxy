@@ -58,7 +58,7 @@ function _notify_last_command() {
     last_command=${last_entry[@]:3}
 
     if [ ${last_exit_code} -eq 0 ] ; then
-        $notify --icon utilites-terminal \
+        $notify --icon utilites-terminal --hint int:transient:1 \
                 "Command exited on ${NOTIFY_TITLE}" "$last_command"
     else
         $notify --icon gtk-dialog-error --urgency=critical \
