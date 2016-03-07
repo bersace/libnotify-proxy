@@ -29,7 +29,7 @@ def is_focused(window_title):
 @asyncio.coroutine
 def notify_send(
         summary, body=None, urgency='normal', icon=None, window_title=None,
-        expire_time=None,
+        expire_time=None, hint=None,
         **kwargs):
 
     if window_title:
@@ -45,6 +45,12 @@ def notify_send(
         args.extend(['--icon', icon])
     if urgency:
         args.extend(['--urgency', urgency])
+    if hint:
+        if not isinstance(hint, list):
+            hint = [hint]
+        for item in hint:
+            args.extend(['--hint', item])
+
     args.append(summary)
     if body:
         args.append(body)

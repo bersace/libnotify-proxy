@@ -48,7 +48,7 @@ parser.add_argument(
     help="Specifies an icon filename or stock icon to display.",
 )
 parser.add_argument(
-    '--hint', metavar='TYPE:NAME:VALUE',
+    '--hint', metavar='TYPE:NAME:VALUE', action='append',
     help=(
         "Specifies basic extra data to pass. Valid types are int, double, "
         "string and byte."
