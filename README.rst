@@ -77,7 +77,7 @@ IRSSI Setup
   <https://github.com/ramnes/hilightcmd>`_. (Requires `CPAN
   Text::Sprintf::Named
   <http://search.cpan.org/~shlomif/Text-Sprintf-Named-0.0402/lib/Text/Sprintf/Named.pm>`_)
-- ``/set hilightcmd_systemcmd notify-client "%(message)s" &``
+- ``/set hilightcmd_systemcmd notify-client --hint int:transient:1 --hint string:category:im.received "%(message)s" &``
 - Hilight from another IRC client to test it.
 
 That's it.
