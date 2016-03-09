@@ -13,3 +13,4 @@ test -n "${NOTIFY_TITLE}"
 focused_window=$(xdotool getwindowfocus)
 focused_title=$(xdotool getwindowname $focused_window)
 echo $focused_title | grep -q "${NOTIFY_TITLE}"
+echo OK
