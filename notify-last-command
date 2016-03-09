@@ -8,8 +8,8 @@ function _guess_window_title() {
     fqdn=$(hostname --fqdn)
     if [ -n "${BYOBU_BACKEND-}" ] && [ -n "${TMUX-}" ] ; then
         if (echo -e '8.0 NEWER'; cat /etc/debian_version) | sort -V | head -1 | grep -q NEWER ; then
-            window=$(tmux display-message -p '#W')
-            echo "$window $fqdn ($$)";
+            # Let byobu update pane title
+            echo "$fqdn ($$)";
         else
             # This is the default byobu title, recomputed
             ip=$(ip addr show dev eth0 | grep -oP '(?<=inet )(.*)(?=/)')
@@ -25,7 +25,6 @@ function _guess_window_title() {
 }
 
 function _reset_title() {
-    export NOTIFY_TITLE=$(_guess_window_title)
     echo -ne "\033]2;${NOTIFY_TITLE}\007"
 }
 
@@ -68,13 +67,18 @@ function _notify_last_command() {
 
 function notify_last_command() {
     last_exit_status=$1
-    last_entry="$(HISTTIMEFORMAT="%s " history 1)"
+    last_entry=($(HISTTIMEFORMAT="%s " history 1))
 
-    # Check tmux window name update
-    _reset_title
+    # Loose list of command known to change window title. This can trigger a
+    # bug in terminator where window title is updated from a background
+    # tab. But most of the time, you are detaching a session, so you are
+    # focusing this shell.
+    if expr match "${last_entry[2]}" "\(byobu\|screen\|ssh\|tmux\)" &>/dev/null; then
+        _reset_title
+    fi
 
     # Run in background
-    (_notify_last_command $last_exit_status ${last_entry} &)
+    (_notify_last_command $last_exit_status ${last_entry[*]} &)
 
     export _NOTIFY_LAST_TIME=$(date +%s)
 }
@@ -86,4 +90,6 @@ else
     # sourced in .bashrc, bootstrap.
     # Ignore previous history.
     export _NOTIFY_LAST_TIME=$(date +%s)
+    export NOTIFY_TITLE=$(_guess_window_title)
+    _reset_title
 fi
