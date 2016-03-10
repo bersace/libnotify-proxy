@@ -90,6 +90,5 @@ References
 
 - Initial idea stolen from `itsamenathan/libnotify-over-ssh
   <https://github.com/itsamenathan/libnotify-over-ssh>`_.
-- `GNOME notifications specs
-  <http://www.galago-project.org/specs/notification/0.9/x211.html>`_ including
-  hints and categories.
+- `GNOME notifications specs <https://developer.gnome.org/notification-spec/>`_
+  including hints and categories.
