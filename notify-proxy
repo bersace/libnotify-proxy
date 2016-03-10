@@ -28,7 +28,7 @@ def is_focused(window_title):
 
 @asyncio.coroutine
 def notify_send(
-        summary, body=None, urgency='normal', icon=None, window_title=None,
+        summary, app_name=None, body=None, urgency='normal', icon=None, window_title=None,
         expire_time=None, hint=None,
         **kwargs):
 
@@ -39,6 +39,8 @@ def notify_send(
             return logger.info("Inhibited for focused window for %s.", summary)
 
     args = [notify_send_path]
+    if app_name:
+        args.extend(['--app-name', app_name])
     if expire_time:
         args.extend(['--expire-time', str(expire_time)])
     if icon:
