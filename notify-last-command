@@ -5,6 +5,12 @@ export NOTIFY_MIN_SECONDS=${NOTIFY_MIN_SECONDS-10}
 
 
 function _guess_window_title() {
+    # If not on TMUX and we have an inherited title, use it. Because we don't control the terminal title.
+    if [ -z "${TMUX-}" -a -n "${NOTIFY_INHERIT_TITLE}" ] ; then
+        echo ${NOTIFY_INHERIT_TITLE}
+        return
+    fi
+
     fqdn=$(hostname --fqdn)
     if [ -n "${BYOBU_BACKEND-}" ] && [ -n "${TMUX-}" ] ; then
         if (echo -e '8.0 NEWER'; cat /etc/debian_version) | sort -V | head -1 | grep -q NEWER ; then
@@ -72,8 +78,9 @@ function _notify_last_command() {
 
 function _export_title() {
     title="$*"
-    export NOTIFY_TITLE=$(_guess_window_title)
-    export LC_TELEPHONE=notify_title:$NOTIFY_TITLE
+    export NOTIFY_TITLE="$title"
+    # Pass NOTIFY_TITLE to ssh connections through LC_* hack.
+    export LC_TELEPHONE="notify_title:$title"
 }
 
 function notify_last_command() {
@@ -109,6 +116,14 @@ else
     # sourced in .bashrc, bootstrap.
     # Ignore previous history.
     export _NOTIFY_LAST_TIME=$(date +%s)
+
+    # On shell init, if on SSH connections, not within tmux, LC_TELEPHONE contains passthrough hack…
+    if [[ -n "${SSH_CONNECTION-}" && -z "${NOTIFY_TITLE-}" && "${LC_TELEPHONE-}" =~ ^notify_title:* ]] ;
+    then
+        # Save the inherited title
+        export NOTIFY_INHERIT_TITLE="${LC_TELEPHONE##notify_title:}"
+    fi
+
     _export_title $(_guess_window_title)
     _reset_title
 fi
