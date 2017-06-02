@@ -70,6 +70,12 @@ function _notify_last_command() {
     fi
 }
 
+function _export_title() {
+    title="$*"
+    export NOTIFY_TITLE=$(_guess_window_title)
+    export LC_TELEPHONE=notify_title:$NOTIFY_TITLE
+}
+
 function notify_last_command() {
     last_exit_status=$1
     last_entry=($(HISTTIMEFORMAT="%s " history 1))
@@ -79,7 +85,7 @@ function notify_last_command() {
         return
     fi
 
-    export NOTIFY_TITLE=$(_guess_window_title)
+    _export_title $(_guess_window_title)
     WAIT_TITLE=0
     # Loose list of command known to change window title. This can trigger a
     # bug in terminator where window title is updated from a background
@@ -103,6 +109,6 @@ else
     # sourced in .bashrc, bootstrap.
     # Ignore previous history.
     export _NOTIFY_LAST_TIME=$(date +%s)
-    export NOTIFY_TITLE=$(_guess_window_title)
+    _export_title $(_guess_window_title)
     _reset_title
 fi
