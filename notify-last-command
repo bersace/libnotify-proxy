@@ -12,8 +12,9 @@ function _guess_window_title() {
     fi
 
     fqdn=$(hostname --fqdn)
-    if [ -n "${BYOBU_BACKEND-}" ] && [ -n "${TMUX-}" ] ; then
-        if (echo -e '8.0 NEWER'; cat /etc/debian_version) | sort -V | head -1 | grep -q NEWER ; then
+    if [ -n "${TMUX-}" ] ; then
+        # Hack to manage old debian version. Can't tell which of byobu or tmux or else needs to be checked.
+        if (echo -e '8.0 NEWER'; cat /etc/debian_version 2>/dev/null) | sort -V | head -1 | grep -q NEWER ; then
             # Let byobu update pane title
             echo "$fqdn ($$)";
         else
