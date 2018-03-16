@@ -27,7 +27,7 @@ function _guess_window_title() {
         #
         #     set -g set-titles on
         #     set -g set-titles-string '#(hostname --fqdn) (#{pane_pid})'
-        echo "bash $fqdn ($$)"
+        echo "${PANE_TITLE-bash} $fqdn ($$)"
     fi
 }
 
