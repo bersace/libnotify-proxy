@@ -19,8 +19,8 @@ function _guess_window_title() {
             echo "$fqdn ($$)";
         else
             # This is the default byobu title, recomputed
-            ip=$(ip addr show dev eth0 | grep -oP '(?<=inet )(.*)(?=/)')
-            echo "${LOGNAME}@$fqdn ($ip) - byobu"
+            ips=($(hostname --all-ip-addresses))
+            echo "${LOGNAME}@$fqdn (${ip[0]}) - byobu"
         fi
     else
         # Put this in ~/.config/byobu/.tmux.conf:
