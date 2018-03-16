@@ -94,18 +94,10 @@ function notify_last_command() {
     fi
 
     _export_title $(_guess_window_title)
-    WAIT_TITLE=0
-    # Loose list of command known to change window title. This can trigger a
-    # bug in terminator where window title is updated from a background
-    # tab. But most of the time, you are detaching a session, so you are
-    # focusing this shell.
-    if expr match "${last_entry[2]}" "\(byobu\|screen\|ssh\|tmux\)" &>/dev/null; then
-        _reset_title
-        WAIT_TITLE=1
-    fi
+    _reset_title
 
     # Run in background
-    (WAIT_TITLE=$WAIT_TITLE _notify_last_command $last_exit_status ${last_entry[*]} &)
+    (WAIT_TITLE=1 _notify_last_command $last_exit_status ${last_entry[*]} &)
 
     export _NOTIFY_LAST_TIME=$(date +%s)
 }
