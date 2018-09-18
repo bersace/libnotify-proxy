@@ -16,6 +16,12 @@
     dest: ~/.local/bin/notify-proxy
     mode: 0750
 
+- name: Ensure .config/autostart
+  tags: notif,notify
+  file:
+    state: directory
+    dest: "~/.config/autostart/"
+
 - name: Setup session autostart
   tags: notif,notify
   when: ansible_env.DESKTOP_SESSION is defined
