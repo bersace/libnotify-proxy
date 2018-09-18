@@ -51,6 +51,6 @@
 
 - name: .tmux.conf
   tags: notif,notify,byobu
-  copy:
+  template:
     src: ../tmux.conf
     dest: ~/.config/byobu/.tmux.conf
