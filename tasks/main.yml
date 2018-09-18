@@ -31,10 +31,10 @@
     mode: 0750
 
 - name: Install notify.bash
-  tags: notif,notify
+  tags: notif,notify,bash
   copy:
     src: ../notify.bash
-    dest: ~/.local/lib/notify.bash
+    dest: ~/.config/bashrc.d/notify.bash
     mode: 0750
 
 - name: byobu directory
