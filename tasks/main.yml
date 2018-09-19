@@ -40,7 +40,7 @@
   tags: notif,notify,bash
   copy:
     src: ../notify.bash
-    dest: ~/.config/bashrc.d/notify.bash
+    dest: ~/.config/profile.d/notify.bash
     mode: 0750
 
 - name: byobu directory
