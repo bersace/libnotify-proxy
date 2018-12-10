@@ -1,47 +1,46 @@
 ---
-- name: Check desktop session
-  shell: env | grep DESKTOP_SESSION
-  changed_when: false
-  ignore_errors: true
-  register: desktop_session
-
 - name: Install dependencies
-  with_items:
+  when: ansible_env.DESKTOP_SESSION is defined
+  become: yes
+  package:
+    name:
     - libnotify-bin
     - xdotool
-  apt: name={{ item }}
-  become: yes
-  when: desktop_session.rc == 0
+
+- name: Directories
+  loop:
+  - ~/.config/autostart
+  - ~/.config/byobu
+  - ~/.local/bin
+  file:
+    state: directory
+    path: "{{ item }}"
 
 - name: Install scripts
-  with_items:
-    - notify-client
-    - notify-is-focused
-    - notify-last-command
+  loop:
+  - notify-client
+  - notify-is-focused
+  - notify-last-command
   copy:
     src: ../{{ item }}
     dest: ~/.local/bin/{{ item }}
     mode: 0750
 
 - name: Install notify-proxy script
+  when: ansible_env.DESKTOP_SESSION is defined
   copy:
     src: ../notify-proxy
     dest: ~/.local/bin/notify-proxy
     mode: 0750
-  when: desktop_session.rc == 0
 
 - name: Setup session autostart
+  when: ansible_env.DESKTOP_SESSION is defined
   copy:
     src: ../notify-proxy.desktop
     dest: ~/.config/autostart/notify-proxy.desktop
-  when: desktop_session.rc == 0
-
-- name: byobu directory
-  file:
-    state: directory
-    path: ~/.config/byobu/
 
 - name: .tmux.conf
+  when: ansible_env.DESKTOP_SESSION is defined
   copy:
     src: ../tmux.conf
     dest: ~/.config/byobu/.tmux.conf
