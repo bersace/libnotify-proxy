@@ -72,9 +72,7 @@ class NotifyProtocol(asyncio.Protocol):
             logger.warn("Failed to parse payload:\n%s", e)
             return
 
-        asyncio.async(notify_send(**data))
-
-
+        asyncio.ensure_future(notify_send(**data))
 
 
 DEBUG = os.environ.get('DEBUG')
@@ -97,7 +95,7 @@ logger.info("Listening on %s:%d", addr, port)
 if DEBUG:
     data = json.loads(DEBUG)
     logger.debug("Testing %r", data)
-    loop.run_until_complete(asyncio.async(notify_send(**data)))
+    loop.run_until_complete(asyncio.ensure_future(notify_send(**data)))
 else:
     try:
         loop.run_forever()
