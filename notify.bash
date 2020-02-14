@@ -3,11 +3,39 @@
 # Minimal duration of last commands to notify it.
 NOTIFY_MIN_SECONDS=${NOTIFY_MIN_SECONDS-10}
 
-# Variable to store output without subshell. String or array.
+# Variable to store output without subshell cost. String or array.
 __notify_ret=
 
-# Command to send notification
-__notify=notify-client
+# Setup on sourcing in .bashrc.
+__notify_bootstrap() {
+    # Choose notify-send for remote.
+    if [ -n "${SSH_CLIENT-}" ] ; then
+        __notify=notify-client
+    else
+        # Command to send notification
+        __notify=notify-send
+    fi
+
+    # Save current windows title. Export it to notify-client
+    __notify_guess_window_title
+    __NOTIFY_TITLE="${__notify_ret}"
+    __notify_ret=
+}
+
+# This is the prompt command entry point, receiving last command exit status as
+# argument.
+notify_last_command() {
+    local last_exit_status=$1
+    local last_entry=($(HISTTIMEFORMAT="%s " history 1))
+
+    # Skip if history is empty
+    if [ "${#last_entry[@]}" -eq 0 ] ; then
+        return
+    fi
+
+    # Check in background.
+    ((__notify_maybe $last_exit_status "${last_entry[@]}" &>/dev/null )&)
+}
 
 __notify_is_focused() {
     # Use xdotool to check whether the terminal window is focused.
@@ -15,48 +43,64 @@ __notify_is_focused() {
         # When headless, consider we are not focused.
         return 1
     fi
-    test -n "${NOTIFY_TITLE}"
-    local escaped_title=$(sed 's/[][()\.^$?*+]/\\&/g' <<< "${NOTIFY_TITLE}")
+    test -n "${__NOTIFY_TITLE}"
+    local escaped_title=$(sed 's/[][()\.^$?*+]/\\&/g' <<< "${__NOTIFY_TITLE}")
+    # Wait few seconds for window manager synchronisation when alt-tabing.
+    sleep 2
     focused_window=$(xdotool getwindowfocus)
     my_window=$(xdotool search --name "${escaped_title}")
     test "${focused_window}" = "${my_window}"
 }
 
 __notify_guess_window_title() {
-    # If not on TMUX and we have an inherited title, use it. Because we don't control the terminal title.
-    if [ -z "${TMUX-}" -a -n "${__NOTIFY_INHERIT_TITLE-}" ] ; then
-        __notify_ret="${__NOTIFY_INHERIT_TITLE}"
+    # On shell init, guess our terminal window title.
+    local fqdn
+    local ips
+    local legacy_debian
+
+    if [ -n "${NOTIFY_TITLE-}" ] ; then
+        __notify_ret=$NOTIFY_TITLE
+        return
+    fi
+   
+    # On shell init, if on SSH connections, not within tmux, LC_IDENTIFICATION
+    # contains passthrough hack…
+    if [ -n "${SSH_CONNECTION-}" -a -z "${TMUX-}" -a -n "${LC_IDENTIFICATION-}" ] ;
+    then
+        # Save the inherited title
+        __notify_ret="${LC_IDENTIFICATION#libnotify:}"
+        unset LC_IDENTIFICATION
         return
     fi
 
-    local fqdn=${__notify_fqdn}
-    if [ -n "${TMUX-}" ] ; then
-        # Hack to manage old debian version. Can't tell which of byobu or tmux or else needs to be checked.
-        if [ "${__notify_legacy_debian}" = 0 ]; then
-            # Let byobu update pane title
-            __notify_ret="$fqdn ($$)"
-            return
-        else
-            # This is the default byobu title, recomputed
-            local ips=($(hostname --all-ip-addresses))
-            __notify_ret="${LOGNAME}@$fqdn (${ips[0]}) - byobu"
-            return
-        fi
+    # Save whether we have a configurable tmux title or if we must stick to
+    # default.
+    if [ -f /etc/debian_version ] && printf '8.0\n%s' $(</etc/debian_version) | sort --version-sort --check=quiet 2>/dev/null ; then
+        legacy_debian=0
     else
+        legacy_debian=1
+    fi
+
+    fqdn=$(hostname --fqdn)
+    if [ -n "${TMUX-}" ] && [ "$legacy_debian" = 1 ]; then
+        # This is the default byobu title, recomputed
+        ips=($(hostname --all-ip-addresses))
+        __notify_ret="${LOGNAME}@$fqdn (${ips[0]}) - byobu"
+        return
+    else
+        # This the needle for notify : hostname and SHELL PID.
         # Put this in ~/.config/byobu/.tmux.conf:
         #
         #     set -g set-titles on
         #     set -g set-titles-string '#(hostname --fqdn) (#{pane_pid})'
-        __notify_ret="${PANE_TITLE-bash} $fqdn ($$)"
+        __notify_ret="$fqdn ($$)"
         return
     fi
 }
 
 __notify_update_title() {
-    __notify_guess_window_title
-    export NOTIFY_TITLE="${__notify_ret}"
     # Pass NOTIFY_TITLE to ssh connections through LC_* hack.
-    export LC_NOTIFY_TITLE="${NOTIFY_TITLE}"
+    export LC_IDENTIFICATION="libnotify:${__NOTIFY_TITLE}"
     # Send title to terminal emulator.
     echo -ne "\033]2;${NOTIFY_TITLE}\007"
 }
@@ -65,7 +109,6 @@ __notify_maybe() {
     # To test this function:
     #
     # NOTIFY_MIN_SECONDS=0 NOTIFY_TITLE=toto ./notify.bash __notify_maybe 0 $(HISTTIMEFORMAT="%s " history 1)
-    #
 
     local exit_code=$1
     shift  # Skip history index.
@@ -89,76 +132,29 @@ __notify_maybe() {
         args=(
             --icon utilites-terminal
             --hint int:transient:1
-            "Command exited on ${NOTIFY_TITLE}."
+            "Command exited on ${__NOTIFY_TITLE}."
         )
     else
         args=(
             --icon gtk-dialog-error
             --urgency critical
-            "Command failed on ${NOTIFY_TITLE}!"
+            "Command failed on ${__NOTIFY_TITLE}!"
         )
     fi
-    $__notify --app-name "${SHELL##*/}" "${args[@]}"  "$last_command"
+    NOTIFY_TITLE=$__NOTIFY_TITLE $__notify --app-name "${SHELL##*/}" "${args[@]}"  "$last_command"
 }
 
-# This is the prompt command entry point, receiving last command exit status as
-# argument.
-notify_last_command() {
-    local last_exit_status=$1
-    local last_entry=($(HISTTIMEFORMAT="%s " history 1))
-
-    # Skip if history is empty
-    if [ "${#last_entry[@]}" -eq 0 ] ; then
-        return
-    fi
-
-    __notify_update_title
-
-    # Wait one seconds so that Window manager can update the title. This way, we
-    # avoid to consider current window as unfocused. Then, check command status
-    # in background.
-    ((sleep 1; __notify_maybe $last_exit_status "${last_entry[@]}" &>/dev/null )&)
-
-    export __NOTIFY_TIMESTAMP=$(date +%s)
-}
-
-# Setup on sourcing in .bashrc.
-bootstrap() {
-    # If you change FQDN, you should exec $SHELL to update this.
-    __notify_fqdn=$(hostname --fqdn)
-
-    # Save whether we have a configurable tmux title or if we must stick to default.
-    if [ -f /etc/debian_version ] && printf '8.0\n%s' $(</etc/debian_version) | sort --version-sort --check=quiet 2>/dev/null ; then
-        __notify_legacy_debian=0
-    else
-        __notify_legacy_debian=1
-    fi
-
-    # Choose notify-send for remote.
-    if [ -n "${SSH_CLIENT-}" ] ; then
-        __notify=notify-send
-    fi
-
-    # Reset timestamp to ignore previous history.
-    export __NOTIFY_TIMESTAMP=$(date +%s)
-
-    # On shell init, if on SSH connections, not within tmux, LC_NOTIFY_TITLE contains
-    # passthrough hack…
-    if [ -n "${SSH_CONNECTION-}" -a -z "${NOTIFY_TITLE-}" -a -n "${LC_NOTIFY_TITLE-}" ] ;
-    then
-        # Save the inherited title
-        export __NOTIFY_INHERIT_TITLE="${LC_NOTIFY_TITLE}"
-    fi
-
-    __notify_update_title
-}
 
 if [ $# = 0 ]; then
-    bootstrap
+    # When sourced by .bashrc, bootstrap, set title on let .bashrc edit
+    # PROMPT_COMMAND.
+    __notify_bootstrap
+    __notify_update_title
 else
     # You can test any code by calling ./notify.bash my_command line. e.g.
     # ./notify.bash __notify_guess_window_title
     set -eux
+    __notify_bootstrap
     "$@"
     echo "${__notify_ret}"
     set +eux

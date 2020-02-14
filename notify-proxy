@@ -15,25 +15,38 @@ notify_send_path = find_executable('notify-send')
 
 @asyncio.coroutine
 def is_focused(window_title):
-    environ = dict(os.environ, NOTIFY_TITLE=window_title)
-    child = yield from asyncio.create_subprocess_exec(
-        'notify-is-focused',
-        stdout=asyncio.subprocess.PIPE,
-        env=environ,
+    escaped_title = (
+        window_title
+        .replace('(', r'\(')
+        .replace(')', r'\)')
+        .replace('.', r'\.')
     )
-
+    child = yield from asyncio.create_subprocess_exec(
+        'xdotool', 'search', '--name', escaped_title,
+        stdout=asyncio.subprocess.PIPE,
+    )
     stdout, _ = yield from child.communicate()
-    return child.returncode == 0
+    origin_wid = stdout.strip()
+
+    child = yield from asyncio.create_subprocess_exec(
+        'xdotool', 'getwindowfocus',
+        stdout=asyncio.subprocess.PIPE,
+    )
+    stdout, _ = yield from child.communicate()
+    focused_wid = stdout.strip()
+
+    return origin_wid == focused_wid
 
 
 @asyncio.coroutine
 def notify_send(
-        summary, app_name=None, body=None, urgency='normal', icon=None, window_title=None,
-        expire_time=None, hint=None,
+        summary, app_name=None, body=None, urgency='normal', icon=None,
+        window_title=None, expire_time=None, hint=None,
         **kwargs):
 
     if window_title:
-        logger.debug("Checking focused window is %s", window_title)
+        logger.debug("Checking focused window is %s in 2s.", window_title)
+        yield from asyncio.sleep(2)
         is_window_focused = yield from is_focused(window_title)
         if is_window_focused:
             return logger.info("Inhibited for focused window for %s.", summary)
