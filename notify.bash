@@ -72,20 +72,16 @@ __notify_maybe() {
     local cmdstart="$2"
     local last_command="${@:3}"
 
+    if [ -z "${EPOCHSECONDS-}" ] ; then
+        EPOCHSECONDS="$(date +%s)"
+    fi
+    elapsed_seconds=$((EPOCHSECONDS - cmdstart))
+    if [ $elapsed_seconds -lt ${NOTIFY_MIN_SECONDS} ] ; then
+        return
+    fi
+
     if __notify_is_focused ; then
         # bash is focused. skip.
-        return
-    fi
-
-    # If command last command was started before last run, just ignore it.
-    if [ $cmdstart -le ${__NOTIFY_TIMESTAMP-0} ] ; then
-        return
-    fi
-
-    now=$(date +%s)
-    elapsed_seconds=$((now - cmdstart))
-
-    if [ $elapsed_seconds -lt ${NOTIFY_MIN_SECONDS} ] ; then
         return
     fi
 
