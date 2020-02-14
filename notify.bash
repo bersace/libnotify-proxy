@@ -128,7 +128,7 @@ bootstrap() {
     __notify_fqdn=$(hostname --fqdn)
 
     # Save whether we have a configurable tmux title or if we must stick to default.
-    if printf '8.0\n%s' $(</etc/debian_version) | sort --version-sort --check=quiet 2>/dev/null ; then
+    if [ -f /etc/debian_version ] && printf '8.0\n%s' $(</etc/debian_version) | sort --version-sort --check=quiet 2>/dev/null ; then
         __notify_legacy_debian=0
     else
         __notify_legacy_debian=1
