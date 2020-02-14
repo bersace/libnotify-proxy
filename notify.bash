@@ -11,6 +11,10 @@ __notify=notify-client
 
 __notify_is_focused() {
     # Use xdotool to check whether the terminal window is focused.
+    if [ -z "${DISPLAY-}" ] ; then
+        # When headless, consider we are not focused.
+        return 1
+    fi
     test -n "${NOTIFY_TITLE}"
     local escaped_title=$(sed 's/[][()\.^$?*+]/\\&/g' <<< "${NOTIFY_TITLE}")
     focused_window=$(xdotool getwindowfocus)
