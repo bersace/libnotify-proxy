@@ -77,7 +77,7 @@ logger.info("Sending to %s:%s.", addr, port)
 try:
     client.connect((addr, int(port)))
 except ConnectionRefusedError:
-    logger.warn('Failed to notify %r. Connection refused.', args.summary)
+    logger.warning('Failed to notify %r. Connection refused.', args.summary)
     sys.exit(1)
 
 data = dict(args.__dict__)
