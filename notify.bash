@@ -85,14 +85,20 @@ __notify_maybe() {
         return
     fi
 
-    args=(--app-name ${SHELL##*/})
     if [ ${exit_code} -eq 0 ] ; then
-        $__notify "${args[@]}" --icon utilites-terminal --hint int:transient:1 \
-                "Command exited on ${NOTIFY_TITLE}" "$last_command"
+        args=(
+            --icon utilites-terminal
+            --hint int:transient:1
+            "Command exited on ${NOTIFY_TITLE}."
+        )
     else
-        $__notify "${args[@]}" --icon gtk-dialog-error --urgency=critical \
-                "Command failed on ${NOTIFY_TITLE}" "$last_command"
+        args=(
+            --icon gtk-dialog-error
+            --urgency critical
+            "Command failed on ${NOTIFY_TITLE}!"
+        )
     fi
+    $__notify --app-name "${SHELL##*/}" "${args[@]}"  "$last_command"
 }
 
 # This is the prompt command entry point, receiving last command exit status as
