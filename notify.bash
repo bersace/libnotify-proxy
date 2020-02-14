@@ -123,6 +123,12 @@ __notify_maybe() {
         return
     fi
 
+    command=${last_command[0]}
+    if [[ "less|man|more|pager" =~ $command ]] ; then
+        # Ignore known long command.
+        return
+    fi
+
     if __notify_is_focused ; then
         # bash is focused. skip.
         return
