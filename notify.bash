@@ -64,7 +64,7 @@ __notify_maybe() {
     #
 
     local exit_code=$1
-    shift
+    shift  # Skip history index.
     local cmdstart="$2"
     local last_command="${@:3}"
 
