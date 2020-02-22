@@ -87,10 +87,11 @@ __notify_maybe() {
 	#
 	# NOTIFY_MIN_SECONDS=0 NOTIFY_TITLE=toto ./notify.bash __notify_maybe 0 $(HISTTIMEFORMAT="%s " history 1)
 
-	local exit_code=$1
+	local exit_code=$1; shift
 	shift  # Skip history index.
-	local cmdstart="$2"
-	local last_command="${@:3}"
+	local cmdstart="$1"; shift
+	local command="$1"
+	local last_command="$*"
 
 	if [ -z "${EPOCHSECONDS-}" ] ; then
 		EPOCHSECONDS="$(date +%s)"
@@ -100,9 +101,8 @@ __notify_maybe() {
 		return
 	fi
 
-	command=${last_command[0]}
-	if [[ "less|man|more|pager" =~ $command ]] ; then
-		# Ignore known long command.
+	if [[ "git|less|man|more|most|pager|tmux" =~ $command ]] ; then
+		# Ignore known interactive command.
 		return
 	fi
 
