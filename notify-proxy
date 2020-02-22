@@ -15,6 +15,16 @@ notify_send_path = find_executable('notify-send')
 
 @asyncio.coroutine
 def is_focused(window_title):
+    child = yield from asyncio.create_subprocess_exec(
+        'xdotool', 'getactivewindow', 'getwindowname',
+        stdout=asyncio.subprocess.PIPE,
+    )
+    stdout, _ = yield from child.communicate()
+    focused_name = stdout.strip()
+
+    if focused_name.endswith(window_title):
+        return True
+
     escaped_title = (
         window_title
         .replace('(', r'\(')
@@ -26,16 +36,9 @@ def is_focused(window_title):
         stdout=asyncio.subprocess.PIPE,
     )
     stdout, _ = yield from child.communicate()
-    origin_wid = stdout.strip()
 
-    child = yield from asyncio.create_subprocess_exec(
-        'xdotool', 'getwindowfocus',
-        stdout=asyncio.subprocess.PIPE,
-    )
-    stdout, _ = yield from child.communicate()
-    focused_wid = stdout.strip()
-
-    return origin_wid == focused_wid
+    # Consider a closed terminal as focused (i.e. don't notify).
+    return child.rc is None
 
 
 @asyncio.coroutine
