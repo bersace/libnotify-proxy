@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -eux
 
 # Minimal duration of last commands to notify it.
 NOTIFY_MIN_SECONDS=${NOTIFY_MIN_SECONDS-10}
@@ -159,7 +159,6 @@ if [ $# = 0 ]; then
 else
 	# You can test any code by calling ./notify.bash my_command line. e.g.
 	# ./notify.bash __notify_guess_window_title
-	set -eux
 	__notify_bootstrap
 	"$@"
 	echo "${__notify_ret}"
