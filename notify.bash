@@ -118,7 +118,7 @@ __notify_from_history() {
 			"Command failed on ${__NOTIFY_TITLE}!"
 		)
 	fi
-	NOTIFY_TITLE=$__NOTIFY_TITLE notify-send --app-name "${SHELL##*/}" "${args[@]}"  "$last_command"
+	NOTIFY_TITLE=$__NOTIFY_TITLE notify-client --app-name "${SHELL##*/}" "${args[@]}"  "$last_command"
 }
 
 
