@@ -8,14 +8,6 @@ __notify_ret=
 
 # Setup on sourcing in .bashrc.
 __notify_bootstrap() {
-	# Choose notify-send for remote.
-	if [ -n "${SSH_CLIENT-}" ] ; then
-		__notify=notify-client
-	else
-		# Command to send notification
-		__notify=notify-send
-	fi
-
 	# Save current windows title. Export it to notify-client
 	__notify_guess_window_title
 	__NOTIFY_TITLE="${__notify_ret}"
@@ -35,21 +27,6 @@ notify_last_command() {
 
 	# Check in background.
 	((__notify_maybe $last_exit_status "${last_entry[@]}" &>/dev/null )&)
-}
-
-__notify_is_focused() {
-	# Use xdotool to check whether the terminal window is focused.
-	if [ -z "${DISPLAY-}" ] ; then
-		# When headless, consider we are not focused.
-		return 1
-	fi
-	test -n "${__NOTIFY_TITLE}"
-	local escaped_title=$(sed 's/[][()\.^$?*+]/\\&/g' <<< "${__NOTIFY_TITLE}")
-	# Wait few seconds for window manager synchronisation when alt-tabing.
-	sleep 2
-	focused_window=$(xdotool getwindowfocus)
-	my_window=$(xdotool search --name "${escaped_title}")
-	test "${focused_window}" = "${my_window}"
 }
 
 __notify_guess_window_title() {
@@ -129,11 +106,6 @@ __notify_maybe() {
 		return
 	fi
 
-	if __notify_is_focused ; then
-		# bash is focused. skip.
-		return
-	fi
-
 	if [ ${exit_code} -eq 0 ] ; then
 		args=(
 			--icon utilites-terminal
@@ -147,7 +119,7 @@ __notify_maybe() {
 			"Command failed on ${__NOTIFY_TITLE}!"
 		)
 	fi
-	NOTIFY_TITLE=$__NOTIFY_TITLE $__notify --app-name "${SHELL##*/}" "${args[@]}"  "$last_command"
+	NOTIFY_TITLE=$__NOTIFY_TITLE notify-send --app-name "${SHELL##*/}" "${args[@]}"  "$last_command"
 }
 
 
