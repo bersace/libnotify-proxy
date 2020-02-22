@@ -48,8 +48,6 @@ def notify_send(
         **kwargs):
 
     if window_title:
-        logger.debug("Checking focused window is %s in 2s.", window_title)
-        yield from asyncio.sleep(2)
         is_window_focused = yield from is_focused(window_title)
         if is_window_focused:
             return logger.info("Inhibited for focused window for %s.", summary)
