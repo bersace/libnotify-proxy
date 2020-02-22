@@ -18,6 +18,7 @@
 
 - name: Ensure .config/autostart
   tags: notif,notify
+  when: ansible_env.DESKTOP_SESSION is defined
   file:
     state: directory
     dest: "~/.config/autostart/"
