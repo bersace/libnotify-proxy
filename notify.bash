@@ -25,8 +25,7 @@ notify_last_command() {
 		return
 	fi
 
-	# Check in background.
-	((__notify_maybe $last_exit_status "${last_entry[@]}" &>/dev/null )&)
+	__notify_from_history $last_exit_status "${last_entry[@]}" &>/dev/null
 }
 
 __notify_guess_window_title() {
@@ -82,7 +81,7 @@ __notify_update_title() {
 	echo -ne "\033]2;${NOTIFY_TITLE}\007"
 }
 
-__notify_maybe() {
+__notify_from_history() {
 	# To test this function:
 	#
 	# NOTIFY_MIN_SECONDS=0 NOTIFY_TITLE=toto ./notify.bash __notify_maybe 0 $(HISTTIMEFORMAT="%s " history 1)
