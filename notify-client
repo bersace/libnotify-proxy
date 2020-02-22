@@ -6,6 +6,7 @@ import logging
 import os
 import socket
 import sys
+from textwrap import dedent
 
 
 try:
@@ -23,7 +24,9 @@ logging.basicConfig(
     format='%(message)s',
 )
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(epilog=dedent("""\
+If NOTIFY_TITLE env var is set, its value is sent to notify-proxy. notify-proxy
+inhibit notification if focused window title ends with NOTIFY_TITLE value. """))
 parser.add_argument(
     'summary', metavar='SUMMARY',
     help="Titleline of the notification.",
