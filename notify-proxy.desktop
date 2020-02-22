@@ -1,5 +1,8 @@
 [Desktop Entry]
-Type=Application
 Name=Notification proxy
-NoDisplay=true
+Name[fr]=Mandataire de notification
 Exec=notify-proxy
+Type=Application
+Terminal=false
+NoDisplay=true
+X-GNOME-Autostart-enabled=true
