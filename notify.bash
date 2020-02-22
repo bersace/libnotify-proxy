@@ -105,7 +105,7 @@ __notify_from_history() {
 		return
 	fi
 
-	if [ ${exit_code} -eq 0 ] ; then
+	if [ "${exit_code}" -eq 0 ] ; then
 		args=(
 			--icon utilites-terminal
 			--hint int:transient:1
@@ -128,8 +128,8 @@ if [ $# = 0 ]; then
 	__notify_bootstrap
 	__notify_update_title
 else
-	# You can test any code by calling ./notify.bash my_command line. e.g.
-	# ./notify.bash __notify_guess_window_title
+	# You can test any function by calling ./notify.bash my_command line.
+	# e.g. ./notify.bash __notify_guess_window_title
 	__notify_bootstrap
 	"$@"
 	echo "${__notify_ret}"
