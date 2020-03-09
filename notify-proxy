@@ -8,49 +8,69 @@ import json
 
 
 logger = logging.getLogger('notify-proxy')
-
-
 notify_send_path = find_executable('notify-send')
 
 
 @asyncio.coroutine
 def is_focused(window_title):
+    logger.debug("Checking focused window for title %s.", window_title)
     child = yield from asyncio.create_subprocess_exec(
         'xdotool', 'getactivewindow', 'getwindowname',
         stdout=asyncio.subprocess.PIPE,
     )
     stdout, _ = yield from child.communicate()
-    focused_name = stdout.strip()
+    focused_name = stdout.strip().decode('utf-8')
 
-    if focused_name.endswith(window_title):
-        return True
+    return focused_name.endswith(window_title)
 
+
+@asyncio.coroutine
+def window_exists(window_title):
     escaped_title = (
         window_title
         .replace('(', r'\(')
         .replace(')', r'\)')
         .replace('.', r'\.')
     )
+    logger.debug("Checking if window %s still exists.", window_title)
     child = yield from asyncio.create_subprocess_exec(
         'xdotool', 'search', '--name', escaped_title,
         stdout=asyncio.subprocess.PIPE,
     )
-    stdout, _ = yield from child.communicate()
+    yield from child.communicate()
 
     # Consider a closed terminal as focused (i.e. don't notify).
-    return child.rc is None
+    return 0 == child.returncode
+
+
+@asyncio.coroutine
+def inhibit(window_title, summary, **_):
+    if not window_title:
+        return False
+
+    is_window_focused = yield from is_focused(window_title)
+    if is_window_focused:
+        logger.info("Focused window %s inhibits %s.",
+                    window_title, summary)
+        return True
+    exists = yield from window_exists(window_title)
+    if exists:
+        logger.info("Closed window %s inhibits %s.",
+                    window_title, summary)
+        return True
+
+    return False
 
 
 @asyncio.coroutine
 def notify_send(
         summary, app_name=None, body=None, urgency='normal', icon=None,
         window_title=None, expire_time=None, hint=None,
-        **kwargs):
+        **_):
 
-    if window_title:
-        is_window_focused = yield from is_focused(window_title)
-        if is_window_focused:
-            return logger.info("Inhibited for focused window for %s.", summary)
+    inhibit_ = yield from inhibit(window_title, summary)
+    if inhibit_:
+        return
 
     args = [notify_send_path]
     if app_name:
@@ -71,7 +91,7 @@ def notify_send(
     if body:
         args.append(body)
 
-    logger.debug("%r", ' '.join(args))
+    logger.debug("Executing %s", ' '.join(args))
     child = yield from asyncio.create_subprocess_exec(*args)
     yield from child.communicate()
     logger.info("Notification sent: %r", summary)
@@ -91,8 +111,8 @@ class NotifyProtocol(asyncio.Protocol):
 
 DEBUG = os.environ.get('DEBUG')
 logging.basicConfig(
-    level=logging.DEBUG if DEBUG else logging.INFO,
-    format='%(message)s',
+    level=logging.DEBUG if DEBUG else logging.DEBUG,
+    format='%(levelname).1s: %(message)s',
 )
 logger.info("Starting notify-proxy")
 
